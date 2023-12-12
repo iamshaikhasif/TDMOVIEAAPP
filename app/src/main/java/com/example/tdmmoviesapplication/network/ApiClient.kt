@@ -1,16 +1,31 @@
 package com.example.tdmmoviesapplication.network
 
+import com.google.gson.GsonBuilder
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.create
+import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    val baseUrl = "https://api.themoviedb.org/3/"
-        var apiService: ApiService? = null
+    private const val baseUrl = "https://api.themoviedb.org/3/"
+    private var apiService: ApiService? = null
     fun getInstance(): ApiService {
-        if(apiService == null){
+        if (apiService == null) {
+            val gson = GsonBuilder()
+                .create()
+            val mHttpLoggingInterceptor = HttpLoggingInterceptor()
+                .setLevel(HttpLoggingInterceptor.Level.BODY)
+            val okHttpClient = OkHttpClient.Builder()
+                .readTimeout(100, TimeUnit.SECONDS)
+                .connectTimeout(100, TimeUnit.SECONDS)
+                .addInterceptor(mHttpLoggingInterceptor)
+                .addInterceptor(HttpInterceptorClass.getInstance())
+                .build()
             val retrofit = Retrofit.Builder().baseUrl(baseUrl)
-                .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
+                .addConverterFactory(GsonConverterFactory.create(gson))
                 .build()
             apiService = retrofit.create(ApiService::class.java)
         }
